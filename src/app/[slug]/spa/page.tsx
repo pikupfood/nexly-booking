@@ -41,13 +41,15 @@ export default function SpaBookingPage() {
   const handleSubmit = async () => {
     if (!tenant) return
     setSubmitting(true)
-    const { data } = await supabase.from('spa_appointments').insert([{
-      guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null,
-      service_id: selected.id, staff_id: booking.staff_id || null,
-      date: booking.date, time: booking.time, price: selected.price,
-      notes: client.notes || null, status: 'confirmed', tenant_id: tenant.id,
-    }]).select().single()
-    if (data) { setBookingRef(data.appointment_number || ''); setSuccess(true) }
+    const { data, error } = await supabase.rpc('booking_create_spa_appointment', {
+      p_tenant_id: tenant.id,
+      p_guest_name: client.name, p_guest_phone: client.phone || null, p_guest_email: client.email || null,
+      p_service_id: selected.id, p_staff_id: booking.staff_id || null,
+      p_date: booking.date, p_time: booking.time, p_price: selected.price,
+      p_notes: client.notes || null,
+    })
+    if (error) { alert('Erreur: ' + error.message); setSubmitting(false); return }
+    setBookingRef(''); setSuccess(true)
     setSubmitting(false)
   }
 

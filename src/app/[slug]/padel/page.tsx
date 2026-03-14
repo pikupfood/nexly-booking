@@ -36,13 +36,15 @@ export default function PadelBookingPage() {
   const handleSubmit = async () => {
     if (!tenant) return
     setSubmitting(true)
-    const { data } = await supabase.from('padel_bookings').insert([{
-      court_id: selectedCourt.id, player_name: client.name,
-      player_phone: client.phone || null, player_email: client.email || null,
-      date: booking.date, start_time: booking.start_time, end_time: endTime,
-      players_count: booking.players_count, price, status: 'confirmed', tenant_id: tenant.id,
-    }]).select().single()
-    if (data) { setBookingRef(data.booking_number || ''); setSuccess(true) }
+    const { data, error } = await supabase.rpc('booking_create_padel_booking', {
+      p_tenant_id: tenant.id,
+      p_court_id: selectedCourt.id, p_player_name: client.name,
+      p_player_phone: client.phone || null, p_player_email: client.email || null,
+      p_date: booking.date, p_start_time: booking.start_time, p_end_time: endTime,
+      p_players_count: booking.players_count, p_price: price,
+    })
+    if (error) { alert('Erreur: ' + error.message); setSubmitting(false); return }
+    setBookingRef(''); setSuccess(true)
     setSubmitting(false)
   }
 

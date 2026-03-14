@@ -35,19 +35,17 @@ export default function HotelBookingPage() {
   const handleSubmit = async () => {
     if (!tenant) return
     setSubmitting(true)
-    const { data: guest } = await supabase.from('guests').insert([{
-      first_name: client.first_name, last_name: client.last_name,
-      email: client.email, phone: client.phone, tenant_id: tenant.id,
-    }]).select().single()
-    if (!guest) { setSubmitting(false); return }
-    const { data: res } = await supabase.from('reservations').insert([{
-      guest_id: guest.id, room_type_id: selectedType.id,
-      check_in: dates.check_in, check_out: dates.check_out,
-      adults: guests.adults, children: guests.children,
-      total_price: total, special_requests: client.requests || null,
-      channel: 'online', status: 'confirmed', tenant_id: tenant.id,
-    }]).select().single()
-    if (res) { setBookingRef(res.reservation_number || ''); setSuccess(true) }
+    const { data: resNumber, error } = await supabase.rpc('booking_create_hotel_reservation', {
+      p_tenant_id: tenant.id,
+      p_first_name: client.first_name, p_last_name: client.last_name,
+      p_email: client.email, p_phone: client.phone || '',
+      p_room_type_id: selectedType.id,
+      p_check_in: dates.check_in, p_check_out: dates.check_out,
+      p_adults: guests.adults, p_children: guests.children,
+      p_total_price: total, p_special_requests: client.requests || null,
+    })
+    if (error) { alert('Erreur: ' + error.message); setSubmitting(false); return }
+    setBookingRef(resNumber || ''); setSuccess(true)
     setSubmitting(false)
   }
 

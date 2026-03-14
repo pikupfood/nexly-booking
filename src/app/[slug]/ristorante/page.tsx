@@ -32,13 +32,15 @@ export default function RistoranteBookingPage() {
   const handleSubmit = async () => {
     if (!tenant) return
     setSubmitting(true)
-    const { data } = await supabase.from('table_reservations').insert([{
-      guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null,
-      table_id: selectedTable?.id || null, date: booking.date, time: booking.time,
-      guests_count: booking.guests_count, notes: `${booking.service}${booking.notes ? ' — '+booking.notes : ''}`,
-      status: 'confirmed', tenant_id: tenant.id,
-    }]).select().single()
-    if (data) { setBookingRef(data.reservation_number || ''); setSuccess(true) }
+    const { data, error } = await supabase.rpc('booking_create_restaurant_reservation', {
+      p_tenant_id: tenant.id,
+      p_guest_name: client.name, p_guest_phone: client.phone || null, p_guest_email: client.email || null,
+      p_table_id: selectedTable?.id || null, p_date: booking.date, p_time: booking.time,
+      p_guests_count: booking.guests_count,
+      p_notes: `${booking.service}${booking.notes ? ' — '+booking.notes : ''}`,
+    })
+    if (error) { alert('Erreur: ' + error.message); setSubmitting(false); return }
+    setBookingRef(''); setSuccess(true)
     setSubmitting(false)
   }
 
