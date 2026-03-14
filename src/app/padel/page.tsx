@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { PageWrapper, Steps, SectionH, NavBtns, ConfirmBox, Row, SuccessPage } from '../hotel/page'
+import { TENANT_ID } from '@/lib/supabase'
 
 const IS: any = { width: '100%', padding: '11px 14px', background: '#fff', border: '1px solid #d8d5d0', borderRadius: '8px', color: '#1a1a1a', fontSize: '14px', fontFamily: "'DM Sans', system-ui, sans-serif", outline: 'none', boxSizing: 'border-box' }
 const LS: any = { display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6760', marginBottom: '6px' }
@@ -24,14 +25,14 @@ export default function PadelPage() {
   const [booking, setBooking] = useState({ date: '', start_time: '10:00', duration: 90, players_count: 4 })
   const [client, setClient] = useState({ name: '', phone: '', email: '' })
 
-  useEffect(() => { supabase.from('padel_courts').select('*').eq('is_active', true).order('name').then(({ data }) => setCourts(data || [])) }, [])
+  useEffect(() => { supabase.from('padel_courts').select('*').eq('is_active', true).eq('tenant_id', TENANT_ID).order('name').then(({ data }) => setCourts(data || [])) }, [])
 
   const endTime = booking.start_time ? addMin(booking.start_time, booking.duration) : ''
   const price = selectedCourt ? (booking.duration / 60) * selectedCourt.price_per_hour : 0
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const { data } = await supabase.from('padel_bookings').insert([{ court_id: selectedCourt.id, player_name: client.name, player_phone: client.phone || null, player_email: client.email || null, date: booking.date, start_time: booking.start_time, end_time: endTime, players_count: booking.players_count, price, status: 'confirmed' }]).select().single()
+    const { data } = await supabase.from('padel_bookings').insert([{ court_id: selectedCourt.id, player_name: client.name, player_phone: client.phone || null, player_email: client.email || null, date: booking.date, start_time: booking.start_time, end_time: endTime, players_count: booking.players_count, price, status: 'confirmed', tenant_id: TENANT_ID }]).select().single()
     if (data) { setBookingRef(data.booking_number || ''); setSuccess(true) }
     setSubmitting(false)
   }

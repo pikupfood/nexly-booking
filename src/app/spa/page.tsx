@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { PageWrapper, Steps, SectionH, NavBtns, ConfirmBox, Row, SuccessPage } from '../hotel/page'
+import { TENANT_ID } from '@/lib/supabase'
 
 const IS: any = { width: '100%', padding: '11px 14px', background: '#fff', border: '1px solid #d8d5d0', borderRadius: '8px', color: '#1a1a1a', fontSize: '14px', fontFamily: "'DM Sans', system-ui, sans-serif", outline: 'none', boxSizing: 'border-box' }
 const LS: any = { display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6760', marginBottom: '6px' }
@@ -22,8 +23,8 @@ export default function SpaPage() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('spa_services').select('*').eq('is_active', true).order('sort_order'),
-      supabase.from('spa_staff').select('*').eq('is_active', true),
+      supabase.from('spa_services').select('*').eq('is_active', true).eq('tenant_id', TENANT_ID).order('sort_order'),
+      supabase.from('spa_staff').select('*').eq('is_active', true).eq('tenant_id', TENANT_ID),
     ]).then(([s, st]) => {
       setServices(s.data || [])
       setStaff(st.data || [])
@@ -33,7 +34,7 @@ export default function SpaPage() {
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const { data } = await supabase.from('spa_appointments').insert([{ guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null, service_id: selected.id, staff_id: booking.staff_id || null, date: booking.date, time: booking.time, price: selected.price, notes: client.notes || null, status: 'confirmed' }]).select().single()
+    const { data } = await supabase.from('spa_appointments').insert([{ guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null, service_id: selected.id, staff_id: booking.staff_id || null, date: booking.date, time: booking.time, price: selected.price, notes: client.notes || null, status: 'confirmed', tenant_id: TENANT_ID }]).select().single()
     if (data) { setBookingRef(data.appointment_number || ''); setSuccess(true) }
     setSubmitting(false)
   }

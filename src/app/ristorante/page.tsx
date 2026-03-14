@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { PageWrapper, Steps, SectionH, NavBtns, ConfirmBox, Row, SuccessPage } from '../hotel/page'
+import { TENANT_ID } from '@/lib/supabase'
 
 const IS: any = { width: '100%', padding: '11px 14px', background: '#fff', border: '1px solid #d8d5d0', borderRadius: '8px', color: '#1a1a1a', fontSize: '14px', fontFamily: "'DM Sans', system-ui, sans-serif", outline: 'none', boxSizing: 'border-box' }
 const LS: any = { display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6760', marginBottom: '6px' }
@@ -20,11 +21,11 @@ export default function RistorantePage() {
   const [client, setClient] = useState({ name: '', phone: '', email: '' })
   const [selectedTable, setSelectedTable] = useState<any>(null)
 
-  useEffect(() => { supabase.from('restaurant_tables').select('*').eq('status', 'free').order('table_number').then(({ data }) => setTables(data || [])) }, [])
+  useEffect(() => { supabase.from('restaurant_tables').select('*').eq('status', 'free').eq('tenant_id', TENANT_ID).order('table_number').then(({ data }) => setTables(data || [])) }, [])
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const { data } = await supabase.from('table_reservations').insert([{ guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null, table_id: selectedTable?.id || null, date: booking.date, time: booking.time, guests_count: booking.guests_count, notes: `${booking.service}${booking.notes ? ' — ' + booking.notes : ''}`, status: 'confirmed' }]).select().single()
+    const { data } = await supabase.from('table_reservations').insert([{ guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null, table_id: selectedTable?.id || null, date: booking.date, time: booking.time, guests_count: booking.guests_count, notes: `${booking.service}${booking.notes ? ' — ' + booking.notes : ''}`, status: 'confirmed', tenant_id: TENANT_ID }]).select().single()
     if (data) { setBookingRef(data.reservation_number); setSuccess(true) }
     setSubmitting(false)
   }
