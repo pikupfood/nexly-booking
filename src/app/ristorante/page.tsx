@@ -1,179 +1,110 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { PageLayout, StepIndicator, SectionTitle, NavButtons, SuccessPage } from '../hotel/page'
+import { PageWrapper, Steps, SectionH, NavBtns, ConfirmBox, Row, SuccessPage } from '../hotel/page'
 
-const inputStyle: any = { width: '100%', padding: '14px 16px', background: '#ffffff08', border: '1px solid #ffffff15', borderRadius: '10px', color: '#f0ece4', fontSize: '14px', fontFamily: "'Jost', sans-serif", fontWeight: 300, outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' }
-const labelStyle: any = { display: 'block', fontSize: '11px', letterSpacing: '0.1em', color: '#ffffff40', marginBottom: '6px', textTransform: 'uppercase' }
+const IS: any = { width: '100%', padding: '11px 14px', background: '#fff', border: '1px solid #d8d5d0', borderRadius: '8px', color: '#1a1a1a', fontSize: '14px', fontFamily: "'DM Sans', system-ui, sans-serif", outline: 'none', boxSizing: 'border-box' }
+const LS: any = { display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b6760', marginBottom: '6px' }
 
-const SERVICES = ['Déjeuner', 'Dîner', 'Brunch', 'Cocktail']
-const TIME_SLOTS = ['12:00', '12:30', '13:00', '13:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30']
+const SERVICES = ['Déjeuner', 'Dîner', 'Brunch']
+const TIMES = ['12:00','12:30','13:00','13:30','19:00','19:30','20:00','20:30','21:00','21:30']
+const LOC: Record<string,string> = { sala: 'Salle', terrazza: 'Terrasse', privato: 'Privé', bar: 'Bar' }
 
-export default function RistoranteBookingPage() {
+export default function RistorantePage() {
   const [tables, setTables] = useState<any[]>([])
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [bookingRef, setBookingRef] = useState('')
-
   const [booking, setBooking] = useState({ date: '', time: '20:00', guests_count: 2, service: 'Dîner', notes: '' })
   const [client, setClient] = useState({ name: '', phone: '', email: '' })
   const [selectedTable, setSelectedTable] = useState<any>(null)
 
-  useEffect(() => {
-    supabase.from('restaurant_tables').select('*').eq('status', 'free').order('table_number').then(({ data }) => setTables(data || []))
-  }, [])
+  useEffect(() => { supabase.from('restaurant_tables').select('*').eq('status', 'free').order('table_number').then(({ data }) => setTables(data || [])) }, [])
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    const { data } = await supabase.from('table_reservations').insert([{
-      guest_name: client.name,
-      guest_phone: client.phone || null,
-      guest_email: client.email || null,
-      table_id: selectedTable?.id || null,
-      date: booking.date,
-      time: booking.time,
-      guests_count: booking.guests_count,
-      notes: `${booking.service}${booking.notes ? ' — ' + booking.notes : ''}`,
-      status: 'confirmed',
-    }]).select().single()
-
+    const { data } = await supabase.from('table_reservations').insert([{ guest_name: client.name, guest_phone: client.phone || null, guest_email: client.email || null, table_id: selectedTable?.id || null, date: booking.date, time: booking.time, guests_count: booking.guests_count, notes: `${booking.service}${booking.notes ? ' — ' + booking.notes : ''}`, status: 'confirmed' }]).select().single()
     if (data) { setBookingRef(data.reservation_number); setSuccess(true) }
     setSubmitting(false)
   }
 
-  if (success) return <SuccessPage bookingRef={bookingRef} type="restaurant" info={`${booking.service} · ${booking.date} à ${booking.time} · ${booking.guests_count} personnes`} />
+  if (success) return <SuccessPage bookingRef={bookingRef} info={`${booking.service} · ${booking.date} à ${booking.time} · ${booking.guests_count} personnes`} />
 
-  const LOC_LABEL: Record<string, string> = { sala: '🏠 Salle', terrazza: '🌿 Terrasse', privato: '🔒 Privé', bar: '🍸 Bar' }
-  const availableTables = tables.filter(t => t.capacity >= booking.guests_count)
+  const Chip = ({ label, active, onClick }: any) => (
+    <button onClick={onClick} style={{ padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontFamily: "'DM Sans', system-ui, sans-serif", background: active ? '#1a1a1a' : '#fff', border: `1px solid ${active ? '#1a1a1a' : '#d8d5d0'}`, color: active ? '#fff' : '#6b6760', transition: 'all 0.15s' }}>{label}</button>
+  )
 
   return (
-    <PageLayout title="Restaurant" subtitle="Réservation de table" back="/">
-      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 24px 80px' }}>
-        <StepIndicator current={step} steps={['Détails', 'Table', 'Coordonnées']} />
+    <PageWrapper title="Restaurant" subtitle="Réservation de table" back="/">
+      <Steps current={step} steps={['Détails', 'Table', 'Coordonnées']} />
 
-        {step === 1 && (
-          <div className="anim-fadeup">
-            <SectionTitle>Votre réservation</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div style={{ gridColumn: '1/-1' }}>
-                <label style={labelStyle}>Type de repas</label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {SERVICES.map(s => (
-                    <button key={s} onClick={() => setBooking(p => ({ ...p, service: s }))} style={{
-                      padding: '10px 18px', borderRadius: '40px', cursor: 'pointer', fontSize: '13px',
-                      fontFamily: "'Jost', sans-serif",
-                      background: booking.service === s ? '#a8c4a020' : 'transparent',
-                      border: `1px solid ${booking.service === s ? '#a8c4a0' : '#ffffff15'}`,
-                      color: booking.service === s ? '#a8c4a0' : '#ffffff40',
-                      transition: 'all 0.2s',
-                    }}>{s}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Date *</label>
-                <input style={inputStyle} type="date" value={booking.date} min={new Date().toISOString().split('T')[0]}
-                  onChange={e => setBooking(p => ({ ...p, date: e.target.value }))} />
-              </div>
-              <div>
-                <label style={labelStyle}>Nombre de personnes</label>
-                <input style={inputStyle} type="number" min="1" max="20" value={booking.guests_count}
-                  onChange={e => setBooking(p => ({ ...p, guests_count: parseInt(e.target.value) || 1 }))} />
-              </div>
-              <div style={{ gridColumn: '1/-1' }}>
-                <label style={labelStyle}>Heure souhaitée</label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {TIME_SLOTS.map(t => (
-                    <button key={t} onClick={() => setBooking(p => ({ ...p, time: t }))} style={{
-                      padding: '10px 16px', borderRadius: '40px', cursor: 'pointer', fontSize: '13px',
-                      fontFamily: "'Jost', sans-serif",
-                      background: booking.time === t ? '#a8c4a020' : 'transparent',
-                      border: `1px solid ${booking.time === t ? '#a8c4a0' : '#ffffff15'}`,
-                      color: booking.time === t ? '#a8c4a0' : '#ffffff40',
-                      transition: 'all 0.2s',
-                    }}>{t}</button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ gridColumn: '1/-1' }}>
-                <label style={labelStyle}>Demandes particulières</label>
-                <textarea style={{ ...inputStyle, height: '80px', resize: 'vertical' }} value={booking.notes}
-                  onChange={e => setBooking(p => ({ ...p, notes: e.target.value }))}
-                  placeholder="Allergie, occasion spéciale, chaise haute..." />
-              </div>
+      {step === 1 && (
+        <div className="anim-fadeup">
+          <SectionH>Votre réservation</SectionH>
+          <div style={{ marginBottom: '18px' }}>
+            <label style={LS}>Type de repas</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {SERVICES.map(s => <Chip key={s} label={s} active={booking.service === s} onClick={() => setBooking(p => ({ ...p, service: s }))} />)}
             </div>
-            <NavButtons onNext={() => setStep(2)} nextDisabled={!booking.date} />
           </div>
-        )}
-
-        {step === 2 && (
-          <div className="anim-fadeup">
-            <SectionTitle>Choix de la table</SectionTitle>
-            <div style={{ fontSize: '13px', color: '#ffffff40', marginBottom: '20px' }}>
-              Tables disponibles pour {booking.guests_count} personne{booking.guests_count > 1 ? 's' : ''} — optionnel
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-              <div onClick={() => setSelectedTable(null)} style={{
-                padding: '16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
-                background: !selectedTable ? '#a8c4a015' : '#111116',
-                border: `1px solid ${!selectedTable ? '#a8c4a0' : '#ffffff12'}`,
-                transition: 'all 0.2s',
-              }}>
-                <div style={{ fontSize: '11px', color: '#ffffff40', marginBottom: '4px' }}>Au choix</div>
-                <div style={{ fontSize: '14px', color: '#f0ece4' }}>Pas de préférence</div>
-              </div>
-              {availableTables.map(t => (
-                <div key={t.id} onClick={() => setSelectedTable(t)} style={{
-                  padding: '16px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
-                  background: selectedTable?.id === t.id ? '#a8c4a015' : '#111116',
-                  border: `1px solid ${selectedTable?.id === t.id ? '#a8c4a0' : '#ffffff12'}`,
-                  transition: 'all 0.2s',
-                }}>
-                  <div style={{ fontSize: '11px', color: '#ffffff40', marginBottom: '4px' }}>{LOC_LABEL[t.location]}</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '22px', color: '#f0ece4' }}>Table {t.table_number}</div>
-                  <div style={{ fontSize: '11px', color: '#ffffff30', marginTop: '2px' }}>{t.capacity} personnes</div>
-                </div>
-              ))}
-            </div>
-            <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="Continuer →" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '18px' }}>
+            <div><label style={LS}>Date *</label><input style={IS} type="date" value={booking.date} min={new Date().toISOString().split('T')[0]} onChange={e => setBooking(p => ({ ...p, date: e.target.value }))} /></div>
+            <div><label style={LS}>Personnes</label><input style={IS} type="number" min="1" max="20" value={booking.guests_count} onChange={e => setBooking(p => ({ ...p, guests_count: parseInt(e.target.value) || 1 }))} /></div>
           </div>
-        )}
-
-        {step === 3 && (
-          <div className="anim-fadeup">
-            <SectionTitle>Vos coordonnées</SectionTitle>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              <div style={{ gridColumn: '1/-1' }}>
-                <label style={labelStyle}>Nom & Prénom *</label>
-                <input style={inputStyle} value={client.name} onChange={e => setClient(p => ({ ...p, name: e.target.value }))} placeholder="Jean Dupont" />
-              </div>
-              <div>
-                <label style={labelStyle}>Email</label>
-                <input style={inputStyle} type="email" value={client.email} onChange={e => setClient(p => ({ ...p, email: e.target.value }))} />
-              </div>
-              <div>
-                <label style={labelStyle}>Téléphone</label>
-                <input style={inputStyle} value={client.phone} onChange={e => setClient(p => ({ ...p, phone: e.target.value }))} />
-              </div>
+          <div style={{ marginBottom: '18px' }}>
+            <label style={LS}>Heure</label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {TIMES.map(t => <Chip key={t} label={t} active={booking.time === t} onClick={() => setBooking(p => ({ ...p, time: t }))} />)}
             </div>
-
-            <div style={{ background: '#a8c4a00a', border: '1px solid #a8c4a020', borderRadius: '14px', padding: '20px', marginBottom: '24px' }}>
-              <div style={{ fontSize: '11px', letterSpacing: '0.12em', color: '#a8c4a080', marginBottom: '12px' }}>RÉCAPITULATIF</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '13px', color: '#ffffff60' }}>
-                <span>Repas</span><span style={{ color: '#f0ece4' }}>{booking.service}</span>
-                <span>Date</span><span style={{ color: '#f0ece4' }}>{booking.date} à {booking.time}</span>
-                <span>Personnes</span><span style={{ color: '#f0ece4' }}>{booking.guests_count}</span>
-                <span>Table</span><span style={{ color: '#f0ece4' }}>{selectedTable ? `Table ${selectedTable.table_number}` : 'Au choix'}</span>
-              </div>
-            </div>
-
-            <NavButtons onBack={() => setStep(2)} onNext={handleSubmit}
-              nextLabel={submitting ? 'Envoi...' : 'Confirmer'}
-              nextDisabled={!client.name || submitting} nextGold />
           </div>
-        )}
-      </div>
-    </PageLayout>
+          <div style={{ marginBottom: '4px' }}>
+            <label style={LS}>Demandes particulières</label>
+            <textarea style={{ ...IS, height: '75px', resize: 'vertical' }} value={booking.notes} onChange={e => setBooking(p => ({ ...p, notes: e.target.value }))} placeholder="Allergie, occasion spéciale..." />
+          </div>
+          <NavBtns onNext={() => setStep(2)} nextDisabled={!booking.date} />
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="anim-fadeup">
+          <SectionH>Choix de la table</SectionH>
+          <p style={{ fontSize: '13px', color: '#8a8680', marginBottom: '18px', marginTop: '-12px' }}>Optionnel — nous vous attribuerons une table si aucune préférence</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px', marginBottom: '8px' }}>
+            <div onClick={() => setSelectedTable(null)} style={{ padding: '14px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', background: '#fff', border: `1.5px solid ${!selectedTable ? '#1a1a1a' : '#e8e6e1'}`, transition: 'border-color 0.15s' }}>
+              <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500 }}>Sans préférence</div>
+            </div>
+            {tables.filter(t => t.capacity >= booking.guests_count).map(t => (
+              <div key={t.id} onClick={() => setSelectedTable(t)} style={{ padding: '14px', borderRadius: '10px', cursor: 'pointer', textAlign: 'center', background: '#fff', border: `1.5px solid ${selectedTable?.id === t.id ? '#1a1a1a' : '#e8e6e1'}`, transition: 'border-color 0.15s' }}>
+                <div style={{ fontSize: '11px', color: '#8a8680', marginBottom: '4px' }}>{LOC[t.location]}</div>
+                <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: '18px', color: '#1a1a1a' }}>Table {t.table_number}</div>
+                <div style={{ fontSize: '11px', color: '#9a9690', marginTop: '2px' }}>{t.capacity} pers.</div>
+              </div>
+            ))}
+          </div>
+          <NavBtns onBack={() => setStep(1)} onNext={() => setStep(3)} />
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="anim-fadeup">
+          <SectionH>Vos coordonnées</SectionH>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+            <div><label style={LS}>Nom & Prénom *</label><input style={IS} value={client.name} onChange={e => setClient(p => ({ ...p, name: e.target.value }))} placeholder="Jean Dupont" /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div><label style={LS}>Email</label><input style={IS} type="email" value={client.email} onChange={e => setClient(p => ({ ...p, email: e.target.value }))} /></div>
+              <div><label style={LS}>Téléphone</label><input style={IS} value={client.phone} onChange={e => setClient(p => ({ ...p, phone: e.target.value }))} /></div>
+            </div>
+          </div>
+          <ConfirmBox>
+            <Row label="Repas" value={booking.service} />
+            <Row label="Date" value={`${booking.date} à ${booking.time}`} />
+            <Row label="Personnes" value={`${booking.guests_count}`} />
+            <Row label="Table" value={selectedTable ? `Table ${selectedTable.table_number}` : 'Attribution automatique'} />
+          </ConfirmBox>
+          <NavBtns onBack={() => setStep(2)} onNext={handleSubmit} nextLabel={submitting ? 'Envoi...' : 'Confirmer'} nextDisabled={!client.name || submitting} />
+        </div>
+      )}
+    </PageWrapper>
   )
 }
