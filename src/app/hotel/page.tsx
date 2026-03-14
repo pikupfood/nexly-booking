@@ -85,7 +85,7 @@ export default function HotelBookingPage() {
     </div>
   )
 
-  if (success) return <SuccessPage ref={bookingRef} type="hotel" info={`${selectedType?.name} · ${nights} nuit${nights > 1 ? 's' : ''} · ${dates.check_in} → ${dates.check_out}`} />
+  if (success) return <SuccessPage bookingRef={bookingRef} type="hotel" info={`${selectedType?.name} · ${nights} nuit${nights > 1 ? 's' : ''} · ${dates.check_in} → ${dates.check_out}`} />
 
   return (
     <PageLayout title="Hôtel" subtitle="Réservation de chambre" back="/">
@@ -148,12 +148,12 @@ export default function HotelBookingPage() {
               <div>
                 <label style={labelStyle}>Adultes</label>
                 <input style={inputStyle} type="number" min="1" max="4" value={guests.adults}
-                  onChange={e => setGuests(p => ({ ...p, adults: parseInt(e.target.value) || 1 })} />
+                  onChange={e => setGuests(p => ({ ...p, adults: parseInt(e.target.value) || 1 }))} />
               </div>
               <div>
                 <label style={labelStyle}>Enfants</label>
                 <input style={inputStyle} type="number" min="0" max="4" value={guests.children}
-                  onChange={e => setGuests(p => ({ ...p, children: parseInt(e.target.value) || 0 })} />
+                  onChange={e => setGuests(p => ({ ...p, children: parseInt(e.target.value) || 0 }))} />
               </div>
             </div>
             {nights > 0 && (
@@ -301,7 +301,7 @@ export function NavButtons({ onBack, onNext, nextDisabled, nextLabel, nextGold, 
   )
 }
 
-export function SuccessPage({ ref: bookingRef, type, info }: any) {
+export function SuccessPage({ bookingRef, type, info }: any) {
   return (
     <main style={{ minHeight: '100vh', background: '#0c0c0e', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div className="anim-fadeup" style={{ textAlign: 'center', maxWidth: '480px' }}>

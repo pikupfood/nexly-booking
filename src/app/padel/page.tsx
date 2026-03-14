@@ -53,7 +53,7 @@ export default function PadelBookingPage() {
     setSubmitting(false)
   }
 
-  if (success) return <SuccessPage ref={bookingRef} type="padel" info={`${selectedCourt?.name} · ${booking.date} · ${booking.start_time}-${endTime} · €${price.toFixed(2)}`} />
+  if (success) return <SuccessPage bookingRef={bookingRef} type="padel" info={`${selectedCourt?.name} · ${booking.date} · ${booking.start_time}-${endTime} · €${price.toFixed(2)}`} />
 
   return (
     <PageLayout title="Padel" subtitle="Réservation de terrain" back="/">

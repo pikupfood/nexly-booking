@@ -33,7 +33,7 @@ const SERVICES = [
     icon: '🎾',
     title: 'Padel',
     subtitle: 'Terrains & Créneaux',
-    desc: 'Réservez l'un de nos 3 terrains couverts et découverts à votre convenance.',
+    desc: `Réservez l'un de nos 3 terrains couverts et découverts à votre convenance.`,
     color: '#c9a96e',
     accent: '#c9a96e20',
   },

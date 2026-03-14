@@ -59,7 +59,7 @@ export default function SpaBookingPage() {
     setSubmitting(false)
   }
 
-  if (success) return <SuccessPage ref={bookingRef} type="spa" info={`${selected?.name} · ${booking.date} à ${booking.time}`} />
+  if (success) return <SuccessPage bookingRef={bookingRef} type="spa" info={`${selected?.name} · ${booking.date} à ${booking.time}`} />
 
   const categories = [...new Set(services.map(s => s.category))]
   const catServices = services.filter(s => s.category === activeCat)

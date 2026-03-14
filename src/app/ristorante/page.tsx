@@ -42,7 +42,7 @@ export default function RistoranteBookingPage() {
     setSubmitting(false)
   }
 
-  if (success) return <SuccessPage ref={bookingRef} type="restaurant" info={`${booking.service} · ${booking.date} à ${booking.time} · ${booking.guests_count} personnes`} />
+  if (success) return <SuccessPage bookingRef={bookingRef} type="restaurant" info={`${booking.service} · ${booking.date} à ${booking.time} · ${booking.guests_count} personnes`} />
 
   const LOC_LABEL: Record<string, string> = { sala: '🏠 Salle', terrazza: '🌿 Terrasse', privato: '🔒 Privé', bar: '🍸 Bar' }
   const availableTables = tables.filter(t => t.capacity >= booking.guests_count)
